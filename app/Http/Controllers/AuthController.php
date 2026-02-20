@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Http\Requests\LoginRequest;
+
 
 class AuthController extends Controller
 {
@@ -20,19 +22,15 @@ class AuthController extends Controller
 
     //LOGIN FUNCTION
 
-    public function login(Request $request) {
-        $credentials =  $request ->validate([
-        'email'=> 'required|email',
-        'password'=> 'required',
-        ]);
+    public function login(LoginRequest $request)
+{
+    $credentials = $request->only('email', 'password');
 
-        if(Auth::attempt($credentials)) {
-            $user = Auth::user();
-            if($user->role ==='admin') {
-                return redirect('/');
-            }
-            return Inertia::render('Login/Login');
-        }
-        return back()->withErrors(['error' => 'Invalid login credentials']);
+    if (Auth::attempt($credentials, $request->remember)) {
+        $request->session()->regenerate();
+        return redirect()->intended('/dashboard');
     }
+
+    return back()->withErrors(['error' => 'Invalid credentials.']);
+}
 }

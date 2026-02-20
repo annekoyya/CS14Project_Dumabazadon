@@ -13,6 +13,10 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+'recaptcha' => [
+    'site' => env('CAPTCHA_SITE_KEY'),
+    'secret' => env('CAPTCHA_SECRET_KEY'),
+],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

@@ -1,102 +1,161 @@
+// resources/js/Pages/Auth/Login.jsx
+import React, { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import React, { useEffect } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const Login = () => {
-const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
-email: '',
-password: '',
-remember: false,
-});
+  // ----------------------------
+  // Form state
+  // ----------------------------
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
+    email: '',
+    password: '',
+    remember: false,
+    captcha_token: '',
+  });
 
-// Clear errors when the user types into email or password
-useEffect(() => {
-if (data.email || data.password) {
-    clearErrors();
-}
-}, [data.email, data.password]);
+  // ----------------------------
+  // Password toggle state
+  // ----------------------------
+  const [showPassword, setShowPassword] = useState(false);
 
-const handleSubmit = (e) => {
-e.preventDefault();
+  // ----------------------------
+  // reCAPTCHA script load
+  // ----------------------------
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
 
-post('/login', {
-    onError: (serverErrors) => {
-    // If specific field errors are not provided, but a global error exists, set it.
-    if (!serverErrors.email && !serverErrors.password && serverErrors.error) {
-        setError('error', serverErrors.error);
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${import.meta.env.VITE_CAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.onload = () => setRecaptchaReady(true);
+    document.body.appendChild(script);
+
+    return () => document.body.removeChild(script);
+  }, []);
+
+  // ----------------------------
+  // Clear errors when user types
+  // ----------------------------
+  useEffect(() => {
+    if (data.email || data.password) {
+      clearErrors();
     }
-    },
-});
-};
+  }, [data.email, data.password]);
 
-return (
-<section className="bg-gray-200 dark:bg-gray-900"
-        style={{ backgroundImage: "url('/images/new_bg.jpg')"  }}>
-    <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-    <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-        <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-        <h1 className="text-xl font-bold leading-tight tracking-tight text-center mb-12 text-gray-900 md:text-2xl dark:text-white">
-            Admin Login
-        </h1>
+  // ----------------------------
+  // Submit handler
+  // ----------------------------
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        {/* Global error message */}
-        {errors.error && (
-            <p className="text-red-500 text-center text-sm mb-4">{errors.error}</p>
-        )}
+    if (!recaptchaReady || !window.grecaptcha) {
+      alert('reCAPTCHA is not ready yet, try again in a moment.');
+      return;
+    }
 
-        <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
-            <div>
-            <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                Email
-            </label>
-            <input
-                type="email"
-                id="email"
-                value={data.email}
-                placeholder="name@company.com"
-                onChange={(e) => setData('email', e.target.value)}
-                autoComplete="email"
-                className={`bg-gray-50 border ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-                } text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-            />
-            {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+    try {
+      const token = await window.grecaptcha.execute(import.meta.env.VITE_CAPTCHA_SITE_KEY, {
+        action: 'login',
+      });
+
+      setData('captcha_token', token);
+
+      post('/login', {
+        onError: (serverErrors) => {
+          if (!serverErrors.email && !serverErrors.password && serverErrors.error) {
+            setError('error', serverErrors.error);
+          }
+        },
+      });
+    } catch (err) {
+      console.error('reCAPTCHA error:', err);
+      alert('Failed to execute reCAPTCHA. Try again.');
+    }
+  };
+
+  return (
+    <section
+      className="bg-gray-200 dark:bg-gray-900"
+      style={{ backgroundImage: "url('/images/new_bg.jpg')" }}
+    >
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-center mb-12 text-gray-900 md:text-2xl dark:text-white">
+              Admin Login
+            </h1>
+
+            {/* Global error message */}
+            {errors.error && (
+              <p className="text-red-500 text-center text-sm mb-4">{errors.error}</p>
             )}
-            </div>
-            <div>
-            <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                Password
-            </label>
-            <input
-                type="password"
-                id="password"
-                value={data.password}
-                onChange={(e) => setData('password', e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className={`bg-gray-50 border mb-10 ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-                } text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-            />
-            {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-            )}
-            </div>
-            <button
-            type="submit"
-            disabled={processing}
-            className={`w-full text-white ${
-                processing ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-            } focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
-            >
-            {processing ? 'Processing...' : 'Sign in'}
-            </button>
-        </form>
+
+            <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={data.email}
+                  placeholder="name@company.com"
+                  onChange={(e) => setData('email', e.target.value)}
+                  autoComplete="email"
+                  className={`bg-gray-50 border ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  } text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+
+              {/* Password */}
+     <div className="relative">
+  <input
+    type={showPassword ? 'text' : 'password'}
+    id="password"
+    value={data.password}
+    onChange={(e) => setData('password', e.target.value)}
+    placeholder="••••••••"
+    autoComplete="current-password"
+    className={`bg-gray-50 border mb-10 ${
+      errors.password ? 'border-red-500' : 'border-gray-300'
+    } text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-700"
+  >
+    {showPassword ? (
+      <EyeSlashIcon className="h-5 w-5" />
+    ) : (
+      <EyeIcon className="h-5 w-5" />
+    )}
+  </button>
+</div>
+
+              <button
+                type="submit"
+                disabled={processing}
+                className={`w-full text-white ${
+                  processing ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+                } focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
+              >
+                {processing ? 'Processing...' : 'Sign in'}
+              </button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+  This site is protected by Google reCAPTCHA v3 — your actions are monitored for security.
+</p>
+            </form>
+          </div>
         </div>
-    </div>
-    </div>
-</section>
-);
+      </div>
+    </section>
+  );
 };
+
 
 export default Login;
