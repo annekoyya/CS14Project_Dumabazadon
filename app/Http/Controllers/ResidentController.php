@@ -10,12 +10,16 @@ use App\Http\Requests\StoreResidentsRequest;
 use App\Http\Requests\UpdateResidentsRequest;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Services\AuditLogService;
+
 
 class ResidentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    
     public function index()
     {
 
@@ -345,10 +349,10 @@ public function allData()
     private function getSocialServicesPopulationData()
     {
         // Group social services by creation year
-        return SocialService::selectRaw('YEAR(created_at) as year, COUNT(*) as count')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get()
+      return SocialService::selectRaw("strftime('%Y', created_at) as year, COUNT(*) as count")
+    ->groupBy('year')
+    ->orderBy('year')
+    ->get()
             ->map(function ($item) {
                 return [
                     'year' => $item->year,
@@ -576,27 +580,30 @@ public function allData()
 
     // STORE DATA FUNCTION
 
-    public function store(StoreResidentsRequest $request)
-    {
-        Resident::create($request->validated());
-    }
+   public function store(StoreResidentsRequest $request)
+{
+    $resident = Resident::create($request->validated());
+    AuditLogService::log('created', 'Resident', $resident->id, $request->validated());
+}
 
 
 
         /////////////////////////////////////////////////////////
                 // UPDATE FUNCTION
 
-    public function updateResident(UpdateResidentsRequest $request, Resident $resident)
-    {
-        // Validate request (already handled by Form Request)
-        $validated = $request->validated();
+public function updateResident(UpdateResidentsRequest $request, Resident $resident)
+{
+    $validated = $request->validated();
+    $before = $resident->toArray();
+    $resident->update($validated);
 
-        // Update resident
-        $resident->update($validated);
+    AuditLogService::log('updated', 'Resident', $resident->id, [
+        'before' => $before,
+        'after'  => $validated,
+    ]);
 
-        // Redirect to a proper route with success message
-        return redirect()->route('resident')->with('success', 'Resident updated successfully.');
-    }
+    return redirect()->route('resident')->with('success', 'Resident updated successfully.');
+}
 
 
 
@@ -604,19 +611,26 @@ public function allData()
         /////////////////////////////////////////////////////////
                 // DESTROY FUNCTION
 
-    public function destroy($id)
-    {
-        $resident = Resident::findOrFail($id);
-        $resident->delete();
-        return redirect()->route('resident')->with('success', 'Resident deleted successfully!');
-    }
+  public function destroy($id)
+{
+    $resident = Resident::findOrFail($id);
+    $before = $resident->toArray();
+    $resident->delete();
+
+    AuditLogService::log('deleted', 'Resident', $id, ['before' => $before]);
+
+    return redirect()->route('resident')->with('success', 'Resident deleted successfully!');
+}
 
     public function restore($id)
-    {
-        $resident = Resident::withTrashed()->findOrFail($id);
-        $resident->restore();
-        return redirect()->route('deleted-datas')->with('success', 'Resident deleted successfully!');
-    }
+{
+    $resident = Resident::withTrashed()->findOrFail($id);
+    $resident->restore();
+
+    AuditLogService::log('restored', 'Resident', $id);
+
+    return redirect()->route('deleted-datas')->with('success', 'Resident restored successfully!');
+}
 
     /**
      * Display a listing of soft-deleted residents.

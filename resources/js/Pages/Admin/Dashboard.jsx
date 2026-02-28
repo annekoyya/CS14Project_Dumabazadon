@@ -13,6 +13,7 @@ import { Inertia } from '@inertiajs/inertia';
 import CalendarComponent from '@/Components/CalendarComponent';
 
 
+
 const Dashboard = ({
   title,
   populationData,

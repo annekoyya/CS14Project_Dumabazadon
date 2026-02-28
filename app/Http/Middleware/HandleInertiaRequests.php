@@ -6,6 +6,7 @@ use App\Models\Resident;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
+
 class HandleInertiaRequests extends Middleware
 {
     /**
@@ -32,9 +33,10 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            'auth' => [
-                'user' => $request->user() ? $request->user()->load('resident') : null,
-            ],
+         
+'auth' => [
+    'user' => $request->user(), // just the user
+],            
             'residents' => Resident::all(),
         ];
 

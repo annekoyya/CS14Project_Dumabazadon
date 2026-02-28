@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\SocialService;
+use App\Services\AuditLogService;
 use App\Http\Requests\StoreSocialServicesRequest;
-use App\Http\Requests\UpdateSocialServicesRequest;
+// use App\Http\Requests\UpdateSocialServicesRequest;
 use Inertia\Inertia;
 
 class SocialServiceController extends Controller
@@ -34,8 +35,8 @@ class SocialServiceController extends Controller
         ]);
 
         // Create the social service record
-        SocialService::create($validatedData);
-
+        $service = SocialService::create($validatedData);
+        AuditLogService::log('created', 'SocialService', $service->id, $validatedData);
         // Redirect to resident route with a success message
         return redirect()->route('resident')->with('success', 'Social Service added successfully.');
     }
@@ -79,39 +80,44 @@ class SocialServiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update( $id)
-    {
-        $socialService = SocialService::findOrFail($id);
+    public function update($id)
+{
+    $socialService = SocialService::findOrFail($id);
+    $validatedData = request()->validate([
+        'service_type' => 'required|string|max:255',
+        'name'         => 'required|string|max:255',
+        'description'  => 'required|string',
+        'contact'      => 'nullable|string|size:11|regex:/^09\d+$/',
+    ]);
 
-        $validatedData = request()->validate([
-            'service_type' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'contact' => 'nullable|string|size:11|regex:/^09\d+$/',
-        ]);
+    $before = $socialService->toArray();
+    $socialService->update($validatedData);
 
-        $socialService->update($validatedData);
+    AuditLogService::log('updated', 'SocialService', $id, [
+        'before' => $before,
+        'after'  => $validatedData,
+    ]);
 
-        return redirect()->route('resident', ['id' => $id])->with('success', 'Social Service updated successfully.');
-    }
+    return redirect()->route('resident', ['id' => $id])->with('success', 'Social Service updated successfully.');
+}
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($socialServices)
-    {
-        //
-        $socialServices = SocialService::findOrFail($socialServices);
-        $socialServices->delete();
-        return redirect()->route('resident')->with('success', 'Social Service deleted successfully!');
-    }
+{
+    $socialServices = SocialService::findOrFail($socialServices);
+    AuditLogService::log('deleted', 'SocialService', $socialServices->id, ['before' => $socialServices->toArray()]);
+    $socialServices->delete();
+    return redirect()->route('resident')->with('success', 'Social Service deleted successfully!');
+}
 
-    public function restore(SocialService $socialServices)
-    {
-        //
-        $socialServices->restore();
-        return redirect()->route('deleted-datas')->with('success', 'Social Service deleted successfully!');
-    }
+   public function restore(SocialService $socialServices)
+{
+    AuditLogService::log('restored', 'SocialService', $socialServices->id);
+    $socialServices->restore();
+    return redirect()->route('deleted-datas')->with('success', 'Social Service restored successfully!');
+}
 
     /**
      * Display a listing of soft-deleted social services.

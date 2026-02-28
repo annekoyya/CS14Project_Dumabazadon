@@ -12,7 +12,7 @@ class AuthController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Login/Login');
+        return Inertia::render('Auth/Login');
     }
 
     public function login(Request $request)
@@ -23,6 +23,7 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+            // Log failed login attempt
             AuditLogService::log('login_failed', null, null, [
                 'email' => $request->email,
             ]);
@@ -30,35 +31,27 @@ class AuthController extends Controller
             return back()->withErrors(['error' => 'Invalid credentials.']);
         }
 
-        $user = Auth::user();
-
-        // Block deactivated accounts
-        if (!$user->is_active) {
-            Auth::logout();
-
-            AuditLogService::log('login_blocked_inactive', null, null, [
-                'email' => $request->email,
-            ]);
-
-            return back()->withErrors(['error' => 'Your account has been deactivated. Contact your SuperAdmin.']);
-        }
-
         $request->session()->regenerate();
 
+        $user = Auth::user();
         $twoFactorService = app(TwoFactorService::class);
 
         if (!$twoFactorService->hasVerifiedBefore($user)) {
             $twoFactorService->generateAndSend($user);
+
+            // Log that 2FA was triggered
             AuditLogService::log('2fa_triggered');
+
             return redirect()->route('2fa.show');
         }
 
+        // Log successful login
         AuditLogService::log('login');
 
         return redirect()->intended('/dashboard');
     }
 
-    public function logout(Request $request)
+   public function logout(Request $request)
 {
     Auth::logout();
     $request->session()->invalidate();

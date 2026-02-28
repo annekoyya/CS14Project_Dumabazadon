@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateCommunityEngagementRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Services\AuditLogService;
+
 
 class CommunityEngagementController extends Controller
 {
@@ -71,8 +73,9 @@ class CommunityEngagementController extends Controller
             'resident_id' => 'nullable|exists:residents,id'
         ]);
     
-        CommunityEngagement::create($validated);
-        
+        $engagement = CommunityEngagement::create($validated); 
+        AuditLogService::log('created', 'CommunityEngagement', $engagement->id, $validated);
+       
         return redirect()->route('community-engagement')
                         ->with('success', 'Your input has been submitted!');
     }
@@ -113,37 +116,37 @@ class CommunityEngagementController extends Controller
      * Update the specified resource in storage.
      */
     public function update(UpdateCommunityEngagementRequest $request, $id)
-    {
-        $communityEngagement = CommunityEngagement::findOrFail($id);
+{
+    $communityEngagement = CommunityEngagement::findOrFail($id);
+    $validatedData = $request->validated();
+    $before = $communityEngagement->toArray();
+    $communityEngagement->update($validatedData);
 
-        $validatedData = $request->validated([
-            
-        ]);
+    AuditLogService::log('updated', 'CommunityEngagement', $id, [
+        'before' => $before,
+        'after'  => $validatedData,
+    ]);
 
-        $communityEngagement->update($validatedData);
-
-        return redirect()->route('resident', ['id' => $id])->with('success', 'Community Engagement updated successfully.');
-    }
-
+    return redirect()->route('resident', ['id' => $id])->with('success', 'Community Engagement updated successfully.');
+}
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
-    {
-        //
-        $communityEngagement = CommunityEngagement::findOrFail($id);
-        $communityEngagement->delete();
-        return redirect()->route('resident')->with('success', 'Community Engagement deleted successfully!');
-    }
+{
+    $communityEngagement = CommunityEngagement::findOrFail($id);
+    AuditLogService::log('deleted', 'CommunityEngagement', $id, ['before' => $communityEngagement->toArray()]);
+    $communityEngagement->delete();
+    return redirect()->route('resident')->with('success', 'Community Engagement deleted successfully!');
+}
 
     public function restore($id)
-    {
-        //
-        $communityEngagement = CommunityEngagement::withTrashed()->findOrFail($id);
-        $communityEngagement->restore();
-        return redirect()->route('deleted-datas')->with('success', 'Community Engagement deleted successfully!');
-    }
-    
+{
+    $communityEngagement = CommunityEngagement::withTrashed()->findOrFail($id);
+    $communityEngagement->restore();
+    AuditLogService::log('restored', 'CommunityEngagement', $id);
+    return redirect()->route('deleted-datas')->with('success', 'Community Engagement restored successfully!');
+}
 
     /**
      * Display a listing of soft-deleted community engagements.

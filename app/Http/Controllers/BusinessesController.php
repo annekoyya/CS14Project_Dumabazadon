@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Businesses;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -97,28 +98,26 @@ class BusinessesController extends Controller
         'business_status'        => 'Active', // default value as defined in migration
     ]);
 
-    Businesses::create($data);
-
+   $business = Businesses::create($data);
+AuditLogService::log('created', 'Business', $business->id, $data);
     return redirect()->route('resident')->with('success', 'Business registered successfully');
 
 }
 
     public function destroy($id)
-    {
-        $business = Businesses::findOrFail($id);
-        $business->delete();
-        return redirect()->route('resident')->with('success', 'Business deleted successfully!');
-    
-    }
-
+{
+    $business = Businesses::findOrFail($id);
+    AuditLogService::log('deleted', 'Business', $id, ['before' => $business->toArray()]);
+    $business->delete();
+    return redirect()->route('resident')->with('success', 'Business deleted successfully!');
+}
         public function restore($id)
-    {
-        $business = Businesses::withTrashed()->findOrFail($id);
-        $business->restore();
-        
-        return redirect()->route('deleted-datas')->with('success', 'Business restored successfully!');
-    
-    }
+{
+    $business = Businesses::withTrashed()->findOrFail($id);
+    $business->restore();
+    AuditLogService::log('restored', 'Business', $id);
+    return redirect()->route('deleted-datas')->with('success', 'Business restored successfully!');
+}
 
 
     private function generateUniquePermitNumber()
@@ -147,20 +146,24 @@ public function edit($id)
 public function update(Request $request, $id)
 {
     $business = Businesses::findOrFail($id);
-
     $validatedData = $request->validate([
-
-        'business_name'          => 'required|string|max:255',
-        'business_address'       => 'required|string',
-        'business_type'          => 'required|string|max:100',
-        'owner_name'             => 'required|string|max:255',
-        'contact_number'         => 'required|string|size:11|max:15|regex:/^09\d{9}$/',
-        'email'                  => 'required|email|max:255',
-        'business_status' => 'required|string|in:Active,Inactive,Pending',
-        'registration_year' => 'required|integer|min:1900|max:' . date('Y'),
+        'business_name'    => 'required|string|max:255',
+        'business_address' => 'required|string',
+        'business_type'    => 'required|string|max:100',
+        'owner_name'       => 'required|string|max:255',
+        'contact_number'   => 'required|string|size:11|max:15|regex:/^09\d{9}$/',
+        'email'            => 'required|email|max:255',
+        'business_status'  => 'required|string|in:Active,Inactive,Pending',
+        'registration_year'=> 'required|integer|min:1900|max:' . date('Y'),
     ]);
 
+    $before = $business->toArray();
     $business->update($validatedData);
+
+    AuditLogService::log('updated', 'Business', $id, [
+        'before' => $before,
+        'after'  => $validatedData,
+    ]);
 
     return redirect()->route('resident', ['id' => $id])->with('success', 'Business updated successfully.');
 }

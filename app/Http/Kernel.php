@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
      * Route middleware.
      */
     protected $routeMiddleware = [
+        '2fa' => \App\Http\Middleware\Check2fa::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,

@@ -43,3 +43,4 @@ EXPOSE 8000 5173
 # Start both Laravel and React
 
 CMD ["sh", "-c", "php artisan migrate --seed && php-fpm && npm run dev"]
+CMD ["sh", "-c", "php artisan migrate --seed && php artisan schedule:work & php-fpm"]

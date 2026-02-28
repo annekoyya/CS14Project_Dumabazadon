@@ -1,4 +1,10 @@
+import { Inertia } from '@inertiajs/inertia';
 import axios from 'axios';
-window.axios = axios;
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+// Axios setup for CSRF
+axios.defaults.withCredentials = true;
+
+// Inertia global setup (optional, ensures CSRF)
+Inertia.defaults = {
+  preserveState: true,
+};

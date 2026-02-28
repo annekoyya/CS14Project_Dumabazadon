@@ -18,13 +18,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
         ]);
 
-        $middleware->alias([
-            'role' => RoleMiddleware::class,
-        ]);
-        //
+$middleware->alias([
+    'role'                => \App\Http\Middleware\RoleMiddleware::class,
+    '2fa'                 => \App\Http\Middleware\Check2fa::class,
+    'must.change.password'=> \App\Http\Middleware\CheckMustChangePassword::class,
+]);
+
+    
+        })
+    ->withSchedule(function ($schedule) {
+        $schedule->command('backup:database')->dailyAt('00:00');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
+
 
     
