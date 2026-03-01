@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\TwoFactorService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class TwoFactorAuthController extends Controller
@@ -16,22 +18,31 @@ class TwoFactorAuthController extends Controller
         return Inertia::render('Auth/TwoFactorVerify');
     }
 
-    public function verify(Request $request)
-    {
-        $request->validate([
-            'code' => ['required', 'string', 'size:6'],
-        ]);
+    // ...existing code...
 
-        $user = $request->user();
+public function verify(Request $request)
+{
+    $request->validate(['code' => 'required|digits:6']);
 
-        if (!$this->twoFactorService->verify($user, $request->code)) {
-            return back()->withErrors(['code' => 'Invalid or expired code. Please try again.']);
-        }
+    $user = Auth::user();
+    assert($user instanceof User);
 
-        $request->session()->put('2fa_passed', true);
-
-        return redirect()->intended('/dashboard');
+    // Use the service which correctly uses password_verify() against the bcrypt hash
+    if (!$this->twoFactorService->verify($user, $request->code)) {
+        return back()->withErrors(['code' => 'Invalid or expired code. Please try again.']);
     }
+
+    // 2FA verified — redirect based on role and password status
+    if ($user->role === 'superadmin') {
+        return redirect('/superadmin/admins');
+    }
+
+    if ($user->must_change_password) {
+        return redirect('/password/change');
+    }
+
+    return redirect('/dashboard');
+}
 
     public function resend(Request $request)
     {

@@ -77,7 +77,7 @@ const Dashboard = ({
           title_image={briefcase_image}
           title="Registered Businesses:"
           number={getBusinessPopulationData.reduce((sum, item) => sum + item.population, 0)}
-          percentage={latestData ? `${latestBusinessData.growth}% ` : 'N/A'}
+percentage={latestBusinessData ? `${latestBusinessData.growth}% ` : 'N/A'}
           date={latestBusinessData ? latestBusinessData.year  : 'N/A'}
         />
         <Card

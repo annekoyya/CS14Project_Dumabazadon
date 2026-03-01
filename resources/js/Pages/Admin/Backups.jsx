@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import Layout from '@/Layouts/Layout'; // Adjust path to your Layout component
 
 const Backups = ({ backups = [] }) => {
     const { props } = usePage();
@@ -88,48 +89,50 @@ const Backups = ({ backups = [] }) => {
     );
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Database Backups
-                </h1>
-                <button
-                    onClick={handleRunNow}
-                    disabled={loading}
-                    className={`text-sm font-medium px-4 py-2 rounded-lg text-white ${
-                        loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-                    }`}
-                >
-                    {loading ? 'Running...' : '+ Run Backup Now'}
-                </button>
-            </div>
-
-            {flash.success && (
-                <div className="mb-4 px-4 py-3 bg-green-100 text-green-700 rounded-lg text-sm dark:bg-green-900 dark:text-green-300">
-                    {flash.success}
+        <Layout>
+            <div className="p-6 max-w-6xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Database Backups
+                    </h1>
+                    <button
+                        onClick={handleRunNow}
+                        disabled={loading}
+                        className={`text-sm font-medium px-4 py-2 rounded-lg text-white ${
+                            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                        }`}
+                    >
+                        {loading ? 'Running...' : '+ Run Backup Now'}
+                    </button>
                 </div>
-            )}
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6 text-sm text-blue-800 dark:text-blue-300">
-                <strong>How to restore a backup:</strong> Download the <code>.sqlite.enc</code> file,
-                place it on the server, then run:<br />
-                <code className="block mt-1 font-mono bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
-                    php artisan backup:decrypt /path/to/backup.sqlite.enc
-                </code>
+                {flash.success && (
+                    <div className="mb-4 px-4 py-3 bg-green-100 text-green-700 rounded-lg text-sm dark:bg-green-900 dark:text-green-300">
+                        {flash.success}
+                    </div>
+                )}
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6 text-sm text-blue-800 dark:text-blue-300">
+                    <strong>How to restore a backup:</strong> Download the <code>.sqlite.enc</code> file,
+                    place it on the server, then run:<br />
+                    <code className="block mt-1 font-mono bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                        php artisan backup:decrypt /path/to/backup.sqlite.enc
+                    </code>
+                </div>
+
+                <BackupTable
+                    title="Primary Backups (storage/app/backups)"
+                    data={primary}
+                    color="blue"
+                />
+
+                <BackupTable
+                    title="Offline Copies (storage/app/backups_offline)"
+                    data={offline}
+                    color="purple"
+                />
             </div>
-
-            <BackupTable
-                title="Primary Backups (storage/app/backups)"
-                data={primary}
-                color="blue"
-            />
-
-            <BackupTable
-                title="Offline Copies (storage/app/backups_offline)"
-                data={offline}
-                color="purple"
-            />
-        </div>
+        </Layout>
     );
 };
 

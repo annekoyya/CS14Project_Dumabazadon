@@ -348,18 +348,21 @@ public function allData()
     //function to get social services population data
     private function getSocialServicesPopulationData()
     {
-        // Group social services by creation year
-      return SocialService::selectRaw("strftime('%Y', created_at) as year, COUNT(*) as count")
-    ->groupBy('year')
-    ->orderBy('year')
-    ->get()
-            ->map(function ($item) {
-                return [
-                    'year' => $item->year,
-                    'population' => $item->count,
-                    'growth' => $this->calculateSocialServicesGrowthRate($item->year),
-                ];
-            });
+        // Get all social services and group by year in PHP instead of SQL
+        $allServices = SocialService::all();
+        
+        return $allServices->groupBy(function ($service) {
+            return Carbon::parse($service->created_at)->year;
+        })
+        ->map(function ($group, $year) {
+            return [
+                'year' => $year,
+                'population' => $group->count(),
+                'growth' => $this->calculateSocialServicesGrowthRate($year),
+            ];
+        })
+        ->sortBy('year')
+        ->values();
     }
 
     //function to calculate social services growth rate

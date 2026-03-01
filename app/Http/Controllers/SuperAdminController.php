@@ -26,7 +26,7 @@ class SuperAdminController extends Controller
                 'must_change_password'=> $user->must_change_password,
                 'created_at'          => $user->created_at->format('Y-m-d H:i:s'),
             ]);
-
+// dd($admins); 
         return Inertia::render('SuperAdmin/Admins/Index', [
             'title'  => 'Admin Users',
             'admins' => $admins,
