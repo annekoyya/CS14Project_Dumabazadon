@@ -8,8 +8,8 @@ use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SocialServiceController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ChangePasswordController;
-use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -45,7 +45,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 Route::middleware(['auth', '2fa', 'must.change.password'])->group(function () {
 
     // Accessible by BOTH admin and superadmin (no role middleware here)
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
+    // Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
     Route::get('/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups');
     Route::post('/backups/run', [\App\Http\Controllers\BackupController::class, 'runNow'])->name('backups.run');
     Route::get('/backups/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
@@ -61,6 +61,10 @@ Route::middleware(['auth', '2fa', 'must.change.password'])->group(function () {
         Route::delete('/admins/{id}', [SuperAdminController::class, 'destroy'])->name('superadmin.admins.destroy');
         Route::patch('/admins/{id}/reset-password', [SuperAdminController::class, 'resetPassword'])->name('superadmin.admins.reset-password');
     });
+
+    Route::middleware(['auth', '2fa', 'must.change.password', 'role:superadmin'])->group(function () {
+    Route::get('/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs');
+});
 
     // ── Admin only (superadmin bypasses via RoleMiddleware) ───────────────
     Route::middleware(['role:admin'])->group(function () {

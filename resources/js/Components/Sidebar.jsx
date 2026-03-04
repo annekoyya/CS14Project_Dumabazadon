@@ -144,15 +144,18 @@ const Sidebar = ({ className }) => {
                     </li>
 
                     {/* Audit Logs & Backups */}
-                    <li>
-                        <Link href="/audit-logs" className={`flex items-center p-3 rounded-lg ${url === '/audit-logs' ? 'bg-gray-900 text-white' : 'hover:bg-gray-300'}`}>
-                            <svg className="shrink-0 w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.96 2.96 0 0 0 .13 5H5Z" />
-                                <path d="M6.737 11.061a2.961 2.961 0 0 1 .81-1.515l6.117-6.116A4.839 4.839 0 0 1 16 2.141V2a1.97 1.97 0 0 0-1.933-2H7v5a2 2 0 0 1-2 2H0v11a1.969 1.969 0 0 0 1.933 2h12.134A1.97 1.97 0 0 0 16 18v-3.093l-1.546 1.546c-.413.413-.94.695-1.513.81l-3.4.679a2.947 2.947 0 0 1-1.85-.227 2.96 2.96 0 0 1-1.635-3.257l.681-3.397Z" />
-                            </svg>
-                            <span className="flex-1 ms-3 whitespace-nowrap">Audit Logs</span>
-                        </Link>
-                    </li>
+                    {/* Audit Logs — SuperAdmin only */}
+{isSuperAdmin && (
+    <li>
+        <Link href="/audit-logs" className={`flex items-center p-3 rounded-lg ${url === '/audit-logs' ? 'bg-gray-900 text-white' : 'hover:bg-gray-300'}`}>
+            <svg className="shrink-0 w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.96 2.96 0 0 0 .13 5H5Z" />
+                <path d="M6.737 11.061a2.961 2.961 0 0 1 .81-1.515l6.117-6.116A4.839 4.839 0 0 1 16 2.141V2a1.97 1.97 0 0 0-1.933-2H7v5a2 2 0 0 1-2 2H0v11a1.969 1.969 0 0 0 1.933 2h12.134A1.97 1.97 0 0 0 16 18v-3.093l-1.546 1.546c-.413.413-.94.695-1.513.81l-3.4.679a2.947 2.947 0 0 1-1.85-.227 2.96 2.96 0 0 1-1.635-3.257l.681-3.397Z" />
+            </svg>
+            <span className="flex-1 ms-3 whitespace-nowrap">Audit Logs</span>
+        </Link>
+    </li>
+)}
 
                     <li>
                         <Link href="/backups" className={`flex items-center p-3 rounded-lg ${url === '/backups' ? 'bg-gray-900 text-white' : 'hover:bg-gray-300'}`}>

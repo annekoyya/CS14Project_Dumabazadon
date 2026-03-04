@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/Components/Navbar';
 import Sidebar from '@/Components/Sidebar';
 import '../../css/app.css';
-import { Inertia } from '@inertiajs/inertia';
+import { router } from '@inertiajs/react';
 
 // Session Timeout Warning Component
 export const SessionTimeoutWarning = () => {
